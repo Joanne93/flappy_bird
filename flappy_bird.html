@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>flappy bird</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="operation">
+        <a href="#" title="暂停" id="paused"><img src="images/bird/button_pause.png" alt=""></a>
+        <a href="#" title="继续" id="continue"><img src="images/bird/button_resume.png" alt=""></a>
+        <a href="#" title="重新开始" id="restart"><img src="images/bird/button_restart.png" alt=""></a>
+        <a href="#" title="退出" id="exit"><img src="images/bird/exit.png" alt=""></a>
+    </div>
+    <p></p>
+    <canvas width="360" height="512" id="canvas"></canvas>
+
+    <!-- <script type="text/javascript" src="js/game.js"></script>
+    <script type="text/javascript" src="js/background.js"></script>
+    <script type="text/javascript" src="js/bird.js"></script>
+    <script type="text/javascript" src="js/pipe.js"></script> -->
+    <script type="text/javascript" src = "js/sea.js"></script>
+    <script type="text/javascript" src = "js/seajs-css.js"></script>
+    
+    <script>
+
+        /* 
+            分析：
+            1、初始化5个类。背景，地面，管子，小鸟，游戏
+            2、渲染背景和地面。在背景类里添加移动的方法。渲染的时候需要计算移动后的图片
+            3、渲染上下管子。管子类里添加移动的方法，游戏类里的管子应该是个数组，添加创建管子方法，数组得判断出去的管子。创建管子不能太快，用一个变量控制一下
+            4、渲染小鸟，小鸟需要旋转，所以中心和坐标系中心要重合，小鸟类添加扇翅膀的方法，游戏类调用扇翅膀再渲染小鸟。翅膀不要扇的太快，需要用变量控制一下
+            5、小鸟类添加下落的方法。用的两个变量实现。上升和下落。游戏类调用下落方法
+            6、游戏类添加键盘按下或者鼠标点击事件，里面调用小鸟的点击事件，改变飞行状态。
+            7、检测小鸟和管子以及地面是否有融合点。
+            8、记录得分。渲染得分情况
+            9、如果结束了，添加一个遮罩的效果，渲染game over图片。
+            10、加开始效果
+            11、模块化
+        */
+
+
+        seajs.use(["game","background","bird","pipe","flappy_bird.css"], function(Game, Background, Bird, Pipe) {
+
+            var ctx = document.getElementById("canvas").getContext("2d");
+            function $(id){return document.getElementById(id)};
+
+            // 创建图片
+            var bg_day = new Image();
+            bg_day.src = "images/bird/bg_day.png";
+            var bg_night = new Image();
+            bg_night.src = "images/bird/bg_night.png";
+            var land = new Image();
+            land.src = "images/bird/land.png";
+            var pipe_up = new Image();
+            pipe_up.src = "images/bird/pipe2_up.png";
+            var pipe_down = new Image();
+            pipe_down.src = "images/bird/pipe2_down.png";
+            var bird_1 = new Image();
+            bird_1.src = "images/bird/bird0_0.png";
+            var bird_2 = new Image();
+            bird_2.src = "images/bird/bird0_1.png";
+            var bird_3 = new Image();
+            bird_3.src = "images/bird/bird0_2.png";
+            var game_over = new Image();
+            game_over.src = "images/bird/text_game_over.png";
+            var tutorial = new Image();
+            tutorial.src = "images/bird/tutorial.png";
+
+            // 数字
+            var num0 = new Image();
+            num0.src = "images/bird/font_048.png";
+            var num1 = new Image();
+            num1.src = "images/bird/font_049.png";
+            var num2 = new Image()
+            num2.src = "images/bird/font_050.png";
+            var num3 = new Image()
+            num3.src = "images/bird/font_051.png";
+            var num4 = new Image()
+            num4.src = "images/bird/font_052.png";
+            var num5 = new Image()
+            num5.src = "images/bird/font_053.png";  
+            var num6 = new Image()
+            num6.src = "images/bird/font_054.png";
+            var num7 = new Image()
+            num7.src = "images/bird/font_055.png";
+            var num8 = new Image()
+            num8.src = "images/bird/font_056.png";
+            var num9 = new Image()
+            num9.src = "images/bird/font_057.png";
+            var numArr = [num0, num1, num2, num3, num4, num5, num6, num7, num8, num9];
+
+            // 创建实例
+            var bg_day = new Background(bg_day, 3);
+            var bg_night = new Background(bg_night, 3);
+            var land = new Background(land, 4);
+            var bird = new Bird( [bird_1, bird_2, bird_3] );
+            var pipe = new Pipe(pipe_up, pipe_down, 3 );
+            var game = new Game(ctx, [bg_day,bg_night], land, bird, pipe, numArr, game_over, tutorial);
+            
+            // 检测小鸟，管子，地面是否撞到。由于是new Image创建的图片，有时候图片还没加载完毕所以就报错了。
+            var imgArr = [pipe_down, pipe_up, bird_1, bird_2, bird_3, game_over, tutorial];
+            var sum = 0;
+            imgArr.forEach(function(value, index, arr) {
+                value.onload = function() {
+                    sum++;
+                    if(sum === arr.length) {
+                        game.init();
+                    }
+                }
+            })
+            
+            // 暂停
+            $("paused").onclick = function() {
+                if(! game.isOver) {
+                    game .pause();
+                }
+                return false;
+            }
+            // 继续
+            $("continue").onclick = function() {
+                if(! game.isOver && game.lock) {
+                    game.start();
+                }
+                return false;
+            }
+            // 重新开始
+            $("restart").onclick = function() {
+                if(game.lock) {
+                    game.restart();
+                }
+                return false;
+            }
+            // 退出
+            $("exit").onclick = function() {
+                if(confirm("你确定退出么？")) {
+                    if (navigator.userAgent.indexOf("MSIE") > 0) {
+                        if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
+                            window.opener = null;
+                            window.close();  
+                        } else {
+                            window.open('', '_top');
+                            window.top.close();
+                        }
+                    } else if (navigator.userAgent.indexOf("Firefox") > 0 || navigator.userAgent.indexOf("Chrome") > 0) {
+                        window.location.href = 'about:blank ';
+                    } else {
+                        window.opener = null;
+                        window.open('', '_self', ''); 
+                        window.close();
+                    }
+                }
+            }
+            
+        })
+        
+    </script>
+</body>
+</html>
+
+<!-- 
+    问题总结：
+        1、渲染小鸟的时候。会出现点击一次，小鸟就跑到页面左上角了。是因为小鸟改变飞行状态的时候，开方会有问题。出现NaN
+        2、检测小鸟和柱子以及地面是否相交的时候，如果是用new Image创建的，有时候会出错。在图片未加载完成的时候就会报错。
+        3、开始把记录得分的属性放在game类中，转为false的时候不好控制，直接放在pipe类中就好了
+        4、一个构造函数里面属性和方法名不要重复，比如fall,fall(),调用fall方法的时候出现该函数不存在
+        5、渲染得分的时候，用的是canvas添加文字的方法，加了阴影和轮廓。然后显示分数用的是图片。判断该数的位数，取余显示
+        6、继续按钮和重新开始按钮不同，前者游戏并未结束，后者结束了。用一个变量isOver实现
+        7、不能连续点击继续按钮和重新开始按钮。需要节流，用一个lock变量
+
+ -->

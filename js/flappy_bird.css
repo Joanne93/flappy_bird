@@ -1,0 +1,36 @@
+* {
+    padding: 0px;
+    margin: 0px;
+}
+body {
+    background: #FFFAF0 url(../images/bird/sky.jpg) no-repeat center center;
+}
+.operation {
+    width: 360px;
+    height: 50px;
+    margin: 30px auto 0;
+    border: 2px solid #eee;
+    border-bottom: none;
+    padding-top: 10px;
+    background-color: #4EC0CA;
+}
+.operation a {
+    float: left;
+    width: 40px;
+    margin-right: 60px;
+    height: 40px;
+}
+.operation a:last-child {
+    margin-right: 0;
+}
+.operation a img {
+    display: block;
+    width: 40px;
+    /* margin: 0 auto; */
+    /* height: 100%; */
+}
+canvas {
+    display: block;
+    margin: 0 auto;
+    border: 2px solid #eee;
+}
